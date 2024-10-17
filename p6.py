@@ -6,7 +6,7 @@
 # Filas: clientes, Columnas: centros de distribución
 import tkinter as tk
 import math
-from tkinter import messagebox
+from tkinter import messagebox, ttk
 
 class MapaClientesCentros(tk.Tk):
     def __init__(self):
@@ -77,8 +77,8 @@ class MapaClientesCentros(tk.Tk):
     def borrar_cliente(self):
         # Eliminar el último cliente de la lista si hay alguno
         if self.clientes:
-            self.clientes.pop()
-            self.dibujar()
+            # Abrir ventana emergente con tabla de clientes
+            TablaClientes(self)
         else:
             messagebox.showwarning("Advertencia", "No hay clientes para borrar.")
 
@@ -91,8 +91,7 @@ class MapaClientesCentros(tk.Tk):
     def borrar_centro(self):
         # Eliminar el último centro de la lista si hay alguno
         if self.centros:
-            self.centros.pop()
-            self.dibujar()
+            TablaCentros(self)
         else:
             messagebox.showwarning("Advertencia", "No hay centros para borrar.")
 
@@ -119,6 +118,159 @@ class MapaClientesCentros(tk.Tk):
             y=y/4
             self.canvas.create_oval(x-5, y-5, x+5, y+5, fill="green")
 
+class TablaClientes(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Eliminar Cliente")
+        self.geometry("260x300")
+
+        self.parent = parent
+        self.clientes = parent.clientes  # Acceder a la lista de clientes del mapa
+
+        # Crear un contenedor para la tabla
+        self.container = tk.Frame(self)
+        #tabla_frame.pack(fill=tk.BOTH, expand=True)
+        self.container.pack(fill=tk.BOTH, expand=True)
+        # Agregar una barra de desplazamiento vertical
+        self.canvas = tk.Canvas(self.container)
+        self.scrollbar = ttk.Scrollbar(self.container, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        # Crear encabezados
+        encabezado = tk.Frame(self.scrollable_frame)
+        encabezado.pack(fill=tk.X, pady=2)
+
+        # Crear encabezados
+        #tk.Label(tabla_frame, text="Cliente", borderwidth=1, relief="solid", width=15).grid(row=0, column=0)
+        #tk.Label(tabla_frame, text="Acción", borderwidth=1, relief="solid", width=15).grid(row=0, column=1)
+        tk.Label(encabezado, text="Cliente", width=20, borderwidth=1, relief="solid").pack(side=tk.LEFT)
+        tk.Label(encabezado, text="Acción", width=15, borderwidth=1, relief="solid").pack(side=tk.LEFT)
+
+        # Contenedor para las filas
+        self.filas_frame = tk.Frame(self.scrollable_frame)
+        self.filas_frame.pack(fill=tk.BOTH, expand=True)
+        # Llenar la tabla con los datos de clientes
+        self.actualizarTabla()
+
+    def actualizarTabla(self):
+        """Actualiza la tabla mostrando las filas actuales de la matriz."""
+        # Primero, limpiar las filas existentes
+        for widget in self.filas_frame.winfo_children():
+            widget.destroy()
+        # Llenar la tabla con los clientes
+        for idx, cliente in enumerate(self.clientes):
+            self.agregarFilaTabla( idx, cliente)
+
+    def agregarFilaTabla(self, idx, cliente):
+        fila_frame = tk.Frame(self.filas_frame)
+        #fila_frame.grid(row=idx + 1, column=0, sticky="ew")
+        fila_frame.pack(fill=tk.BOTH, expand=True)
+        tk.Label(fila_frame, text=f"Cliente {idx + 1}: {cliente}", borderwidth=1, relief="solid", width=20, height=2).pack(side=tk.LEFT)
+
+        btn_eliminar = tk.Button(fila_frame, text="Eliminar", width=14, height=1, command=lambda i=idx: self.eliminarFila(i))
+        btn_eliminar.pack(side=tk.LEFT)
+
+    def eliminarFila(self, fila_idx):
+        """Elimina una fila de la lista de clientes y actualiza la tabla."""
+        if 0 <= fila_idx < len(self.clientes):
+            del self.parent.clientes[fila_idx]  # Eliminar el cliente de la lista del padre
+            self.parent.distancias = calcular_distancias(self.parent.clientes,self.parent.centros)
+            self.parent.clientes_no_atendidos = clientes_no_atendidos(self.parent.distancias,self.parent.tmax)
+            self.parent.dibujar()  # Redibujar el mapa
+            self.parent.dibujar_cuadricula()
+            self.actualizarTabla()
+        else:
+            print("Índice de fila inválido.")
+
+class TablaCentros(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Eliminar Cliente")
+        self.geometry("260x300")
+
+        self.parent = parent
+        self.centros = parent.centros  # Acceder a la lista de clientes del mapa
+
+        # Crear un contenedor para la tabla
+        self.container = tk.Frame(self)
+        #tabla_frame.pack(fill=tk.BOTH, expand=True)
+        self.container.pack(fill=tk.BOTH, expand=True)
+        # Agregar una barra de desplazamiento vertical
+        self.canvas = tk.Canvas(self.container)
+        self.scrollbar = ttk.Scrollbar(self.container, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
+
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+
+        self.canvas.pack(side="left", fill="both", expand=True)
+        self.scrollbar.pack(side="right", fill="y")
+
+        # Crear encabezados
+        encabezado = tk.Frame(self.scrollable_frame)
+        encabezado.pack(fill=tk.X, pady=2)
+
+        # Crear encabezados
+        #tk.Label(tabla_frame, text="Cliente", borderwidth=1, relief="solid", width=15).grid(row=0, column=0)
+        #tk.Label(tabla_frame, text="Acción", borderwidth=1, relief="solid", width=15).grid(row=0, column=1)
+        tk.Label(encabezado, text="Centro", width=20, borderwidth=1, relief="solid").pack(side=tk.LEFT)
+        tk.Label(encabezado, text="Acción", width=15, borderwidth=1, relief="solid").pack(side=tk.LEFT)
+
+        # Contenedor para las filas
+        self.filas_frame = tk.Frame(self.scrollable_frame)
+        self.filas_frame.pack(fill=tk.BOTH, expand=True)
+        # Llenar la tabla con los datos de clientes
+        self.actualizarTabla()
+
+    def actualizarTabla(self):
+        """Actualiza la tabla mostrando las filas actuales de la matriz."""
+        # Primero, limpiar las filas existentes
+        for widget in self.filas_frame.winfo_children():
+            widget.destroy()
+        # Llenar la tabla con los clientes
+        for idx, centro in enumerate(self.centros):
+            self.agregarFilaTabla( idx, centro)
+
+    def agregarFilaTabla(self, idx, centro):
+        fila_frame = tk.Frame(self.filas_frame)
+        #fila_frame.grid(row=idx + 1, column=0, sticky="ew")
+        fila_frame.pack(fill=tk.BOTH, expand=True)
+        tk.Label(fila_frame, text=f"Centro {idx + 1}: {centro}", borderwidth=1, relief="solid", width=20, height=2).pack(side=tk.LEFT)
+
+        btn_eliminar = tk.Button(fila_frame, text="Eliminar", width=14, height=1, command=lambda i=idx: self.eliminarFila(i))
+        btn_eliminar.pack(side=tk.LEFT)
+
+    def eliminarFila(self, fila_idx):
+        """Elimina una fila de la lista de clientes y actualiza la tabla."""
+        if 0 <= fila_idx < len(self.centros):
+            del self.parent.centros[fila_idx]  # Eliminar el cliente de la lista del padre
+            self.parent.distancias = calcular_distancias(self.parent.clientes,self.parent.centros)
+            self.parent.clientes_no_atendidos = clientes_no_atendidos(self.parent.distancias,self.parent.tmax)
+            self.parent.dibujar()  # Redibujar el mapa
+            self.parent.dibujar_cuadricula()
+            self.actualizarTabla()
+        else:
+            print("Índice de fila inválido.")
 
 def calcular_distancias(clientes, centros):
     # Inicializar la matriz de distancias
