@@ -1,0 +1,67 @@
+clc;
+clear;
+
+% Definición del entorno (5x5 grid)
+gridSize = 5;
+grid = zeros(gridSize); % 0: libre, 1: obstáculo
+
+% Posicionar obstáculos
+grid(2, 2) = 1;
+grid(4, 3) = 1;
+
+% Definir posición inicial del agente y objetivo
+agentPos = [1, 1]; % Inicio en la esquina superior izquierda
+goalPos = [5, 5]; % Meta en la esquina inferior derecha
+
+
+% Función para mostrar la cuadrícula
+function showGrid(grid, agentPos, goalPos)
+clf;
+imagesc(grid);
+colormap(gray);
+hold on;
+plot(agentPos(2), agentPos(1), 'bo', 'MarkerSize', 15, 'LineWidth', 3); % 
+Agente
+plot(goalPos(2), goalPos(1), 'ro', 'MarkerSize', 15, 'LineWidth', 3); % Objetivo
+title('Agente navegando en la cuadrícula');
+drawnow;
+end
+
+
+% Mostrar la cuadrícula inicial
+showGrid(grid, agentPos, goalPos);
+% Definir las posibles acciones (movimientos)
+actions = [0, 1; 0, -1; 1, 0; -1, 0]; % Derecha, Izquierda, Abajo, Arriba
+% Mover al agente hasta alcanzar la meta o quedar atrapado
+while ~isequal(agentPos, goalPos)
+% Mostrar la cuadrícula
+showGrid(grid, agentPos, goalPos);
+% Leer los sensores (percibir el entorno)
+% Checar si los movimientos posibles están bloqueados por obstáculos o límites del grid
+validMoves = [];
+for i = 1:size(actions, 1)
+newPos = agentPos + actions(i, :);
+if newPos(1) >= 1 && newPos(1) <= gridSize && newPos(2) >= 1 && newPos(2) <= gridSize
+if grid(newPos(1), newPos(2)) == 0 % No hay obstáculo
+validMoves = [validMoves; actions(i, :)];
+end
+end
+end
+
+% Decisión (elegir un movimiento aleatorio válido)
+if isempty(validMoves)
+disp('El agente está atrapado.');
+break;
+else
+% Tomar una decisión aleatoria basada en los movimientos válidos
+move = validMoves(randi(size(validMoves, 1)), :);
+agentPos = agentPos + move; % Actualizar la posición del agente
+end
+pause(0.5); % Pausa para visualizar el movimiento
+end
+% Verificar si el agente llegó a la meta
+if isequal(agentPos, goalPos)
+disp('El agente alcanzó su objetivo.');
+else
+disp('El agente no pudo llegar a su objetivo.');
+end

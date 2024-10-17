@@ -1,0 +1,30 @@
+% Definir el mapa (10x10) - 0 es libre, 1 es un obstáculo 
+mapa = [0 0 0 0 0 0 1 0 0 0;
+	0 1 1 1 1 0 1 0 1 0; 
+	0 0 0 0 1 0 1 0 1 0; 
+	0 1 0 1 1 0 1 0 1 0;
+	0 1 0 1 0 0 0 0 1 0; 
+	0 1 0 1 1 1 1 0 0 0; 
+	0 0 0 0 0 0 1 1 1 0; 
+	1 1 1 1 1 0 0 0 0 0; 
+	0 0 0 0 1 0 1 1 1 0; 
+	0 0 0 0 0 0 0 0 1 0];
+
+inicio = [1, 1]; % Punto de inicio (fila, columna) 
+objetivo = [10, 10]; % Punto objetivo (fila, columna)
+
+% Función heurística: Distancia Manhattan 
+function h = heuristica_manhattan(nodo, objetivo) 
+	h = abs(nodo(1) - objetivo(1)) + abs(nodo(2) - objetivo(2)); 
+end
+
+
+function [camino, costo_total] = A_star_grid(mapa, inicio, objetivo) % Dimensiones del mapa [nfilas, ncols] = size(mapa); % Crear las matrices de costos g = inf(nfilas, ncols); % Costo g (distancia desde el inicio) f = inf(nfilas, ncols); % Costo f (g + h) % Inicializar el costo del nodo de inicio g(inicio(1), inicio(2)) = 0; f(inicio(1), inicio(2)) = heuristica_manhattan(inicio, objetivo); % Inicializar listas abiertas y cerradas abierta = inicio; % Lista de nodos por explorar cerrada = []; % Lista de nodos ya explorados % Predecesores para reconstruir el camino predecesor = zeros(nfilas, ncols, 2); % Movimientos posibles (arriba, abajo, izquierda, derecha) movimientos = [-1, 0; 1, 0; 0, -1; 0, 1]; while ~isempty(abierta) % Encontrar el nodo con el menor valor f [~, idx] = min(f(sub2ind(size(f), abierta(:,1), abierta(:,2)))); actual = abierta(idx, :); % Si hemos llegado al objetivo if isequal(actual, objetivo)
+
+% Reconstruir el camino camino = actual; while any(predecesor(actual(1), actual(2), :) ~= 0) actual = squeeze(predecesor(actual(1), actual(2), :))'; camino = [actual; camino]; %#ok<AGROW> end costo_total = g(objetivo(1), objetivo(2)); return; end % Eliminar el nodo actual de la lista abierta y añadirlo a la cerrada abierta(idx, :) = []; cerrada = [cerrada; actual]; % Explorar los vecinos (arriba, abajo, izquierda, derecha) for i = 1:4 vecino = actual + movimientos(i, :); % Verificar que el vecino esté dentro del mapa y no sea un obstáculo if vecino(1) > 0 && vecino(1) <= nfilas && vecino(2) > 0 && vecino(2) <= ncols if mapa(vecino(1), vecino(2)) == 0 && ~ismember(vecino, cerrada, 'rows') costo_tentativo_g = g(actual(1), actual(2)) + 1; % Costo de movimiento entre celdas es 1 if ~ismember(vecino, abierta, 'rows') abierta = [abierta; vecino]; % Añadir a la lista abierta end if costo_tentativo_g < g(vecino(1), vecino(2)) % Actualizar los costos g y f predecesor(vecino(1), vecino(2), :) = actual; g(vecino(1), vecino(2)) = costo_tentativo_g; f(vecino(1), vecino(2)) = g(vecino(1), vecino(2)) + heuristica_manhattan(vecino, objetivo);
+
+end end end end end % Si no se encuentra camino camino = []; costo_total = inf;
+
+disp('No se encontró un camino.'); end
+
+[camino, costo_total] = A_star_grid(mapa, inicio, objetivo); disp('Camino encontrado:'); disp(camino); disp('Costo total:'); disp(costo_total); % Visualizar el camino en el mapa figure; imagesc(mapa); hold on; plot(inicio(2), inicio(1), 'go', 'MarkerSize', 10, 'MarkerFaceColor', 'g'); % Inicio plot(objetivo(2), objetivo(1), 'ro', 'MarkerSize', 10, 'MarkerFaceColor', 'r'); % Objetivo plot(camino(:,2), camino(:,1), 'b-', 'LineWidth', 2); % Camino title('Camino encontrado por A*');
