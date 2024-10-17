@@ -6,6 +6,7 @@
 # Filas: clientes, Columnas: centros de distribución
 import tkinter as tk
 import math
+import random
 from tkinter import messagebox, ttk
 
 class MapaClientesCentros(tk.Tk):
@@ -40,7 +41,6 @@ class MapaClientesCentros(tk.Tk):
         tk.Button(self, text="Borrar cliente", command=self.borrar_cliente).grid(row=1, column=2, padx=10, pady=5)
         tk.Button(self, text="Agregar centro", command=self.agregar_centro).grid(row=3, column=0, padx=10, pady=5)
         tk.Button(self, text="Borrar centro", command=self.borrar_centro).grid(row=3, column=2, padx=10, pady=5)
-
 
         self.dibujar()
         # Leyenda
@@ -85,11 +85,25 @@ class MapaClientesCentros(tk.Tk):
         leyenda_canvas3.create_oval(10, 10, 30, 30, fill="green")  # Centro
         leyenda_canvas3.create_text(50, 20, text="Centros de Distribución", anchor="w")
 
+    
+
     def agregar_cliente(self):
-        # Agregar un cliente en una posición aleatoria (para este ejemplo)
-        x, y = 50 + len(self.clientes) * 30, 50 + len(self.clientes) * 30
+        # Generar una posición aleatoria dentro de un rango para el cliente
+        x = random.randint(0, 5000)  # Rango horizontal del canvas
+        y = random.randint(0, 3000)  # Rango vertical del canvas
+
+        # Agregar el nuevo cliente a la lista con las coordenadas aleatorias
         self.clientes.append((x, y))
+
+        # Recalcular las distancias entre clientes y centros
+        self.distancias = calcular_distancias(self.clientes, self.centros)
+
+        # Recalcular la lista de clientes que no pueden ser atendidos
+        self.clientes_no_atendidos = clientes_no_atendidos(self.distancias, self.tmax)
+
+        # Redibujar el canvas para actualizar la posición del nuevo cliente y las distancias
         self.dibujar()
+        self.dibujar_cuadricula()
 
     def borrar_cliente(self):
         # Eliminar el último cliente de la lista si hay alguno
@@ -100,10 +114,22 @@ class MapaClientesCentros(tk.Tk):
             messagebox.showwarning("Advertencia", "No hay clientes para borrar.")
 
     def agregar_centro(self):
-        # Agregar un centro en una posición aleatoria (para este ejemplo)
-        x, y = 100 + len(self.centros) * 30, 100
+        # Generar una posición aleatoria dentro de un rango para el centro
+        x = random.randint(0, 5000)  # Rango horizontal del canvas
+        y = random.randint(0, 3000)   # Rango vertical del canvas
+
+        # Agregar el nuevo centro a la lista con las coordenadas aleatorias
         self.centros.append((x, y))
+
+        # Recalcular las distancias entre clientes y centros
+        self.distancias = calcular_distancias(self.clientes, self.centros)
+
+        # Recalcular la lista de clientes que no pueden ser atendidos
+        self.clientes_no_atendidos = clientes_no_atendidos(self.distancias, self.tmax)
+
+        # Redibujar el canvas para actualizar la posición del nuevo centro
         self.dibujar()
+        self.dibujar_cuadricula()
 
     def borrar_centro(self):
         # Eliminar el último centro de la lista si hay alguno
@@ -111,6 +137,11 @@ class MapaClientesCentros(tk.Tk):
             TablaCentros(self)
         else:
             messagebox.showwarning("Advertencia", "No hay centros para borrar.")
+
+    def ayuda(self):
+        # Mensaje de ayuda
+        messagebox.showinfo("Ayuda", "Los botones de la izquierda sirven para añadir centros o clientes, los de la derecha sirven para quitarlos.")
+    
 
     def dibujar(self):
         # Limpiar el canvas
