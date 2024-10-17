@@ -21,6 +21,16 @@ class MapaClientesCentros(tk.Tk):
         self.distancias = calcular_distancias(self.clientes, self.centros)
         # Clientes que no se pueden atender en 48 horas o menos
         self.clientes_no_atendidos=clientes_no_atendidos(self.distancias,self.tmax)
+
+         # Crear la barra de menú
+        self.menu_bar = tk.Menu(self)
+        self.config(menu=self.menu_bar)
+
+        # Agregar un menú de ayuda
+        self.menu_ayuda = tk.Menu(self.menu_bar, tearoff=0)
+        self.menu_bar.add_cascade(label="Ayuda", menu=self.menu_ayuda)
+        self.menu_ayuda.add_command(label="Acerca de", command=self.mostrar_ayuda)
+
         # Área de dibujo
         self.canvas = tk.Canvas(self, bg="white", width=1300, height=550)
         self.canvas.grid(row=0, column=0, columnspan=4, padx=10, pady=10)
@@ -37,6 +47,13 @@ class MapaClientesCentros(tk.Tk):
         self.dibujar_leyenda()
         self.dibujar_cuadricula()
 
+    def mostrar_ayuda(self):
+        # Mostrar un cuadro de mensaje con información de ayuda
+        messagebox.showinfo("Ayuda", "Este es un mapa interactivo de clientes y centros de distribucion.\n\n"
+                                        "Los numeros al margen del mapa representan las distancias en kilometros.\n"
+                                        "El tiempo para atender a cada cliente se calcula considerando que se recorre la distancia de un centro de distribucion a un cliente a una velocidad de 50 km/h.\n\n"
+                                        "Usa los botones para agregar o borrar clientes y centros.")
+        
     def dibujar_cuadricula(self):
         # Dibujar líneas de la cuadrícula cada 50 unidades
         for i in range(0, 1301, 50):
